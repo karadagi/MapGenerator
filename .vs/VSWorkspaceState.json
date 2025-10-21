@@ -1,0 +1,12 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\html",
+    "\\src\\ts",
+    "\\src\\ts\\impl",
+    "\\src\\ts\\ui"
+  ],
+  "SelectedNode": "\\src\\ts\\ui\\canvas_wrapper.ts",
+  "PreviewInSolutionExplorer": false
+}

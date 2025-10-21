@@ -42,7 +42,7 @@ class Main {
     private colourScheme: string = "Default";  // See colour_schemes.json
     private zoomBuildings: boolean = false;  // Show buildings only when zoomed in?
     private buildingModels: boolean = false;  // Draw pseudo-3D buildings?
-    private showFrame: boolean = false;
+    private showFrame: boolean = true;
 
     // Force redraw of roads when switching from tensor vis to map vis
     private previousFrameDrawTensor = true;

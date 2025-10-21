@@ -99,7 +99,7 @@ export default class Buildings {
                 private redraw: () => void,
                 private dstep: number,
                 private _animate: boolean) {
-        folder.add({'AddBuildings': () => this.generate(this._animate)}, 'AddBuildings');
+        folder.add({'Add Buildings': () => this.generate(this._animate)}, 'Add Buildings');
         folder.add(this.buildingParams, 'minArea');
         folder.add(this.buildingParams, 'shrinkSpacing');
         folder.add(this.buildingParams, 'chanceNoDivide');

@@ -53,7 +53,10 @@ export default abstract class CanvasWrapper {
 
     setDimensions(): void {
         this._width = window.innerWidth * this._scale;
+
         this._height = window.innerHeight * this._scale;
+
+        console.log("Canvas dimensions set:", { width: this._width, height: this._height, scale: this._scale });
     }
 
     get width(): number {
@@ -111,6 +114,7 @@ export class DefaultCanvasWrapper extends CanvasWrapper {
             // Expanded to cover whole drawn area
             const startW = window.innerWidth * (Util.DRAW_INFLATE_AMOUNT - 1) / 2;
             const startH = window.innerHeight * (Util.DRAW_INFLATE_AMOUNT - 1) / 2;
+            
             this.drawRectangle(-startW, -startH, window.innerWidth * Util.DRAW_INFLATE_AMOUNT, window.innerHeight * Util.DRAW_INFLATE_AMOUNT);
         } else {
             this.drawRectangle(0, 0, window.innerWidth, window.innerHeight);

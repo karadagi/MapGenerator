@@ -23,14 +23,20 @@
 
 {
     "Default": {
-        "bgColour": "rgb(236,229,219)",
-        "buildingStroke": "#282828",
-        "seaColour": "#a9d9fe",
+        "bgColour": "white",
+        "seaColour": "rgb(200,215,212)",
+        "buildingStroke": "rgb(238,238,238)",
+        "minorRoadOutline": "rgb(190,190,190)",
+        "minorRoadColour": "rgb(238,238,238)",
         "grassColour": "#c5e8c5",
-        "minorRoadOutline": "#020202",
-        "minorRoadColour": "#F8F8F8",
-        "mainRoadOutline": "#282828",
-        "mainRoadColour": "#FAFA7A",
+        "buildingModels": true,
+        "zoomBuildings": true,
+        "showFrame": true,
+        "outlineSize": 2,
+        "buildingColour": "rgb(240,240,240)",
+        "buildingSideColour": "rgb(200,200,200)",
+        //"mainRoadOutline": "#282828",
+        //"mainRoadColour": "#FAFA7A",
     },
     "Apple": {
         "bgColour": "rgb(248,245,238)",

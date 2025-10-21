@@ -31,6 +31,7 @@ export interface ColourScheme {
     mainWidth?: number;
     zoomBuildings?: boolean;
     buildingModels?: boolean;
+    showFrame?: boolean;
     frameColour?: string;
     frameTextColour?: string;
 }
@@ -84,6 +85,7 @@ export default abstract class Style {
         if (!colourScheme.majorWidth) colourScheme.majorWidth = 4;
         if (!colourScheme.mainWidth) colourScheme.mainWidth = 5;
         if (!colourScheme.mainWidth) colourScheme.mainWidth = 5;
+        if (colourScheme.showFrame === undefined) colourScheme.showFrame = true;
         if (!colourScheme.frameColour) colourScheme.frameColour = colourScheme.bgColour;
         if (!colourScheme.frameTextColour) colourScheme.frameTextColour = colourScheme.minorRoadOutline;
 
@@ -95,6 +97,7 @@ export default abstract class Style {
                 colourScheme.buildingSideColour = colourScheme.buildingColour;
             }
         }
+        this.showFrame = this.colourScheme.showFrame;
     }
 
     public set zoomBuildings(b: boolean) {
