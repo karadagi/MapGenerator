@@ -197,157 +197,122 @@ export default class Buildings {
 
  // CLEAN SIMPLE COURTYARD IMPLEMENTATION
 
- /**
- * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
- * Replace the courtyard section in your generate() method
- */
 
- /**
-  * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-  * Replace the courtyard section in your generate() method
-  */
 
-  /**
-  * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-  * Replace the courtyard section in your generate() method
-  */
+ if (this.buildingMode === 'courtyard') {
+ // -----------------------------------------------------
+ // COURTYARD BUILDING MODE (with proper setbacks)
+ // -----------------------------------------------------
+ // After shrink(), blocks are already offset from streets,
+ // but we apply one more uniform setback (same as divide()).
+ // Then we carve courtyards inside each block.
+ // -----------------------------------------------------
 
-  /**
-   * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-   * Replace the courtyard section in your generate() method
-   */
 
-   /**
-    * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-    * Replace the courtyard section in your generate() method
-    */
+ const setback = this.buildingParams.shrinkSpacing;
+  const shrunkBlocks: Vector[][] = [];
 
-    /**
-     * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-     * Replace the courtyard section in your generate() method
-     */
+  // Outer setback (same as divide mode)
+  for (const p of this.polygonFinder.polygons) {
+      const inset = PolygonUtil.resizeGeometry(p, -setback, true);
+      shrunkBlocks.push(inset && inset.length >= 3 ? inset : p);
+  }
 
-     /**
-      * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
-      * Replace the courtyard section in your generate() method
-      */
+  const allPerimeterLots: Vector[][] = [];
+  let blocksWithCourtyards = 0;
+  let blocksWithoutCourtyards = 0;
 
-      /**
-       * FIXED COURTYARD IMPLEMENTATION
-       * - Proper street setback (shrinkSpacing)
-       * - Clear courtyards in block centers
-       *
-       * Replace the courtyard section in your generate() method
-       */
+  // Loop through each inset block and generate courtyards
+  for (const shrunkBlock of shrunkBlocks) {
+      const blockArea = PolygonUtil.calcPolygonArea(shrunkBlock);
 
-      if (this.buildingMode === 'courtyard') {
-          // IMPORTANT: After shrink(), blocks are already setback from streets
-          // We need to create perimeter lots between this setback boundary and the courtyard
-          const shrunkBlocks = this.polygonFinder.polygons.map(p => p.slice());
+     // Skip blocks too small for courtyards
+     if (blockArea < this.buildingParams.minArea * 2) {
+         const divided = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
+         if (divided.length > 0) allPerimeterLots.push(...divided);
+         blocksWithoutCourtyards++;
+         continue;
+     }
 
-          const allPerimeterLots: Vector[][] = [];
-          let blocksWithCourtyards = 0;
-          let blocksWithoutCourtyards = 0;
+     // Estimate courtyard depth adaptively
+     let perimeter = 0;
+     for (let i = 0; i < shrunkBlock.length; i++) {
+         perimeter += shrunkBlock[i].clone()
+             .sub(shrunkBlock[(i + 1) % shrunkBlock.length])
+             .length();
+     }
+     const avgRadius = perimeter / (2 * Math.PI);
+     const maxSafeDepth = avgRadius * 0.45;
+     const courtyardDepth = Math.min(this.courtyardParams.courtyardDepth, maxSafeDepth);
 
-          for (const shrunkBlock of shrunkBlocks) {
-              const blockArea = PolygonUtil.calcPolygonArea(shrunkBlock);
+     if (courtyardDepth < 5) {
+         const divided = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
+         if (divided.length > 0) allPerimeterLots.push(...divided);
+         blocksWithoutCourtyards++;
+         continue;
+     }
 
-              // Calculate perimeter to estimate block size
-              let perimeter = 0;
-              for (let i = 0; i < shrunkBlock.length; i++) {
-                  perimeter += shrunkBlock[i].clone().sub(shrunkBlock[(i + 1) % shrunkBlock.length]).length();
-              }
-              const avgRadius = perimeter / (2 * Math.PI);
+     // Create the inner courtyard boundary (hole)
+     const courtyard = PolygonUtil.resizeGeometry(shrunkBlock, -courtyardDepth, true);
 
-              // Courtyard depth (adaptive but capped)
-              const maxSafeDepth = avgRadius * 0.45;
-              const courtyardDepth = Math.min(this.courtyardParams.courtyardDepth, maxSafeDepth);
+     if (!courtyard || courtyard.length < 3) {
+         // Courtyard creation failed, just divide
+         const divided = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
+         if (divided.length > 0) allPerimeterLots.push(...divided);
+         blocksWithoutCourtyards++;
+         continue;
+     }
 
-              // Skip blocks that are too small for courtyards
-              if (blockArea < this.buildingParams.minArea * 2 || courtyardDepth < 5) {
-                  // Just divide this block normally (no courtyard)
-                  const divided = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
-                  if (divided.length > 0) {
-                      allPerimeterLots.push(...divided);
-                  } else {
-                      allPerimeterLots.push(shrunkBlock);
-                  }
-                  blocksWithoutCourtyards++;
-                  continue;
-              }
+     // SUCCESS: We have outer (shrunkBlock) and inner (courtyard)
+     blocksWithCourtyards++;
 
-              // Create the inner courtyard boundary
-              const courtyard = PolygonUtil.resizeGeometry(shrunkBlock, -courtyardDepth, true);
+     // Divide the block and remove lots inside the courtyard
+     const dividedLots = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
+     const lotsToUse = dividedLots;
 
-              if (!courtyard || courtyard.length < 3) {
-                  // Courtyard creation failed, divide normally
-                  const divided = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
-                  if (divided.length > 0) {
-                      allPerimeterLots.push(...divided);
-                  } else {
-                      allPerimeterLots.push(shrunkBlock);
-                  }
-                  blocksWithoutCourtyards++;
-                  continue;
-              }
+     for (const lot of lotsToUse) {
+         let keepLot = true;
 
-              // SUCCESS: We have both outer (shrunkBlock) and inner (courtyard) boundaries
-              blocksWithCourtyards++;
+         // Check lot center
+         const lotCenter = PolygonUtil.averagePoint(lot);
+         if (PolygonUtil.insidePolygon(lotCenter, courtyard)) keepLot = false;
 
-              // Now we need to create lots in the perimeter ring (shrunkBlock minus courtyard)
-              // Strategy: Divide the entire shrunkBlock, then filter out lots inside courtyard
+         // Check vertices
+         if (keepLot) {
+             for (const vertex of lot) {
+                 if (PolygonUtil.insidePolygon(vertex, courtyard)) {
+                     keepLot = false;
+                     break;
+                 }
+             }
+         }
 
-              const dividedLots = PolygonUtil.subdividePolygon(shrunkBlock, this.buildingParams.minArea);
-              const lotsToUse = dividedLots.length > 0 ? dividedLots : [shrunkBlock];
+         // Check edge midpoints
+         if (keepLot) {
+             for (let i = 0; i < lot.length; i++) {
+                 const midpoint = lot[i].clone()
+                     .add(lot[(i + 1) % lot.length])
+                     .multiplyScalar(0.5);
+                 if (PolygonUtil.insidePolygon(midpoint, courtyard)) {
+                     keepLot = false;
+                     break;
+                 }
+             }
+         }
 
-              // Filter: keep only lots that are OUTSIDE the courtyard
-              for (const lot of lotsToUse) {
-                  let keepLot = true;
+         if (keepLot) allPerimeterLots.push(lot);
+     }
+ }
 
-                  // Check center
-                  const lotCenter = PolygonUtil.averagePoint(lot);
-                  if (PolygonUtil.insidePolygon(lotCenter, courtyard)) {
-                      keepLot = false;
-                  }
+ console.log(`Blocks with courtyards: ${blocksWithCourtyards}`);
+ console.log(`Blocks without courtyards: ${blocksWithoutCourtyards}`);
+ console.log(`Total perimeter lots: ${allPerimeterLots.length}`);
 
-                  // Check all vertices
-                  if (keepLot) {
-                      for (const vertex of lot) {
-                          if (PolygonUtil.insidePolygon(vertex, courtyard)) {
-                              keepLot = false;
-                              break;
-                          }
-                      }
-                  }
-
-                  // Check edge midpoints (catches lots that slip through)
-                  if (keepLot) {
-                      for (let i = 0; i < lot.length; i++) {
-                          const midpoint = lot[i].clone()
-                              .add(lot[(i + 1) % lot.length])
-                              .multiplyScalar(0.5);
-                          if (PolygonUtil.insidePolygon(midpoint, courtyard)) {
-                              keepLot = false;
-                              break;
-                          }
-                      }
-                  }
-
-                  if (keepLot) {
-                      allPerimeterLots.push(lot);
-                  }
-              }
-          }
-
-          console.log(`Blocks with courtyards: ${blocksWithCourtyards}`);
-          console.log(`Blocks without courtyards: ${blocksWithoutCourtyards}`);
-          console.log(`Total perimeter lots: ${allPerimeterLots.length}`);
-
-          // Replace with perimeter lots
-          this.polygonFinder.polygons.length = 0;
-          Array.prototype.push.apply(this.polygonFinder.polygons, allPerimeterLots);
-
-      } else {
+ // Replace with final perimeter lots
+ this.polygonFinder.polygons.length = 0;
+ Array.prototype.push.apply(this.polygonFinder.polygons, allPerimeterLots);
+}
+ else {
           // Normal divide mode
           await this.polygonFinder.divide(animate);
       }
