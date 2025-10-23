@@ -22,10 +22,14 @@ class BuildingModels {
     private domainController = DomainController.getInstance();
     private _buildingModels: BuildingModel[] = [];
 
-    constructor(lots: Vector[][]) {  // Lots in world space
+    // --- MODIFIED ---
+    // Accept minHeight and heightRange as arguments
+    constructor(lots: Vector[][], minHeight: number, heightRange: number) {  // Lots in world space
         for (const lot of lots) {
             this._buildingModels.push({
-                height: Math.random() * 20 + 20,
+                // --- MODIFIED ---
+                // Use the new variables instead of hardcoded 20, 20
+                height: (Math.random() * heightRange) + minHeight,
                 lotWorld: lot,
                 lotScreen: [],
                 roof: [],
@@ -84,8 +88,17 @@ export default class Buildings {
     private domainController = DomainController.getInstance();
     private preGenerateCallback: () => any = () => {};
     private postGenerateCallback: () => any = () => {};
-    private _models: BuildingModels = new BuildingModels([]);
-    private _blocks: Vector[][] = [];
+
+    // --- MODIFIED ---
+    // Pass default values to the constructor
+    private _models: BuildingModels = new BuildingModels([], 20, 20);
+
+    // --- NEW ---
+    // Create an object to hold height parameters for the GUI
+    private heightParams = {
+        minHeight: 20,
+        heightRange: 20
+    };
 
     private buildingParams: PolygonParams = {
         maxLength: 20,
@@ -100,7 +113,13 @@ export default class Buildings {
                 private dstep: number,
                 private _animate: boolean) {
         folder.add({'Add Buildings': () => this.generate(this._animate)}, 'Add Buildings');
-        folder.add(this._buildingModels.height, 'height');
+
+        // --- THIS IS THE FIX ---
+        // Add controls for your new height parameters
+        folder.add(this.heightParams, 'minHeight', 0, 100).step(1).name('Min Height');
+        folder.add(this.heightParams, 'heightRange', 0, 100).step(1).name('Height Range');
+        // --- END FIX ---
+
         folder.add(this.buildingParams, 'maxLength');
         folder.add(this.buildingParams, 'minArea');
         folder.add(this.buildingParams, 'shrinkSpacing');
@@ -139,7 +158,9 @@ export default class Buildings {
 
     reset(): void {
         this.polygonFinder.reset();
-        this._models = new BuildingModels([]);
+        // --- MODIFIED ---
+        // Pass the height parameters
+        this._models = new BuildingModels([], this.heightParams.minHeight, this.heightParams.heightRange);
     }
 
     update(): boolean {
@@ -151,7 +172,10 @@ export default class Buildings {
      */
     async generate(animate: boolean): Promise<void> {
         this.preGenerateCallback();
-        this._models = new BuildingModels([]);
+        // --- MODIFIED ---
+        // Pass the height parameters
+        this._models = new BuildingModels([], this.heightParams.minHeight, this.heightParams.heightRange);
+
         const g = new Graph(this.allStreamlines, this.dstep, true);
 
         this.polygonFinder = new PolygonFinder(g.nodes, this.buildingParams, this.tensorField);
@@ -159,7 +183,10 @@ export default class Buildings {
         await this.polygonFinder.shrink(animate);
         await this.polygonFinder.divide(animate);
         this.redraw();
-        this._models = new BuildingModels(this.polygonFinder.polygons);
+
+        // --- MODIFIED ---
+        // Pass the parameters again when creating the final models
+        this._models = new BuildingModels(this.polygonFinder.polygons, this.heightParams.minHeight, this.heightParams.heightRange);
 
         this.postGenerateCallback();
     }
