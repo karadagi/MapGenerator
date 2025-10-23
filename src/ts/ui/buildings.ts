@@ -202,101 +202,117 @@ export default class Buildings {
  * Replace the courtyard section in your generate() method
  */
 
-if (this.buildingMode === 'courtyard') {
-    const mainBlocks = this.polygonFinder.polygons.map(p => p.slice());
+ /**
+  * GEOMETRIC DIFFERENCE APPROACH - Much cleaner!
+  * Replace the courtyard section in your generate() method
+  */
 
-    // First, create perimeter rings (donut shapes)
-    const perimeterRings: Vector[][] = [];
+ if (this.buildingMode === 'courtyard') {
+     const mainBlocks = this.polygonFinder.polygons.map(p => p.slice());
 
-    for (const block of mainBlocks) {
-        const blockArea = PolygonUtil.calcPolygonArea(block);
+     // First, create perimeter rings (donut shapes)
+     const perimeterRings: Vector[][] = [];
 
-        // Calculate courtyard depth
-        const courtyardDepth = Math.min(
-            this.courtyardParams.courtyardDepth,
-            Math.sqrt(blockArea) * 0.3
-        );
+     for (const block of mainBlocks) {
+         const blockArea = PolygonUtil.calcPolygonArea(block);
 
-        // Skip tiny blocks - just keep them as-is
-        if (courtyardDepth < 5 || blockArea < this.buildingParams.minArea * 3) {
-            perimeterRings.push(block);
-            continue;
-        }
+         // Calculate courtyard depth
+         const courtyardDepth = Math.min(
+             this.courtyardParams.courtyardDepth,
+             Math.sqrt(blockArea) * 0.3
+         );
 
-        // Create inner courtyard boundary
-        const innerBoundary = PolygonUtil.resizeGeometry(block, -courtyardDepth, true);
+         // Skip tiny blocks - just keep them as-is
+         if (courtyardDepth < 5 || blockArea < this.buildingParams.minArea * 3) {
+             perimeterRings.push(block);
+             continue;
+         }
 
-        if (!innerBoundary || innerBoundary.length < 3) {
-            // Can't create courtyard, keep whole block
-            perimeterRings.push(block);
-            continue;
-        }
+         // Create inner courtyard boundary
+         const innerBoundary = PolygonUtil.resizeGeometry(block, -courtyardDepth, true);
 
-        // We have a valid perimeter ring, add it
-        // Note: We're just storing the outer boundary here
-        // The actual "ring" (outer minus inner) will be divided next
-        perimeterRings.push(block);
-    }
+         if (!innerBoundary || innerBoundary.length < 3) {
+             // Can't create courtyard, keep whole block
+             perimeterRings.push(block);
+             continue;
+         }
 
-    // Now divide the perimeter rings into lots
-    // We'll use a temporary PolygonFinder to divide them
-    const tempFinder = new PolygonFinder([], this.buildingParams, this.tensorField);
-    tempFinder.polygons.length = 0;
-    Array.prototype.push.apply(tempFinder.polygons, perimeterRings);
+         // We have a valid perimeter ring, add it
+         // Note: We're just storing the outer boundary here
+         // The actual "ring" (outer minus inner) will be divided next
+         perimeterRings.push(block);
+     }
 
-    // Use the existing divide logic
-    await tempFinder.divide(animate);
+     // Now divide the perimeter rings into lots
+     // We'll use a temporary PolygonFinder to divide them
+     const tempFinder = new PolygonFinder([], this.buildingParams, this.tensorField);
+     tempFinder.polygons.length = 0;
+     Array.prototype.push.apply(tempFinder.polygons, perimeterRings);
 
-    // Now filter: keep only lots that are NOT in courtyard centers
-    const allDividedLots = tempFinder.polygons;
-    const finalLots: Vector[][] = [];
+     // Use the existing divide logic
+     await tempFinder.divide(animate);
 
-    for (const lot of allDividedLots) {
-        const lotCenter = PolygonUtil.averagePoint(lot);
-        let keepLot = true;
+     // Now filter: keep only lots that are NOT substantially in courtyard centers
+     const allDividedLots = tempFinder.polygons;
+     const finalLots: Vector[][] = [];
 
-        // Find which block this lot belongs to
-        for (const block of mainBlocks) {
-            if (PolygonUtil.insidePolygon(lotCenter, block)) {
-                const blockArea = PolygonUtil.calcPolygonArea(block);
-                const courtyardDepth = Math.min(
-                    this.courtyardParams.courtyardDepth,
-                    Math.sqrt(blockArea) * 0.3
-                );
+     for (const lot of allDividedLots) {
+         const lotCenter = PolygonUtil.averagePoint(lot);
+         let keepLot = true;
 
-                // Check if block has a courtyard
-                if (courtyardDepth >= 5 && blockArea >= this.buildingParams.minArea * 3) {
-                    const innerBoundary = PolygonUtil.resizeGeometry(block, -courtyardDepth, true);
+         // Find which block this lot belongs to
+         for (const block of mainBlocks) {
+             if (PolygonUtil.insidePolygon(lotCenter, block)) {
+                 const blockArea = PolygonUtil.calcPolygonArea(block);
+                 const courtyardDepth = Math.min(
+                     this.courtyardParams.courtyardDepth,
+                     Math.sqrt(blockArea) * 0.3
+                 );
 
-                    if (innerBoundary && innerBoundary.length >= 3) {
-                        // If lot center is inside the courtyard, exclude it
-                        if (PolygonUtil.insidePolygon(lotCenter, innerBoundary)) {
-                            keepLot = false;
-                        }
-                    }
-                }
-                break; // Found parent block
-            }
-        }
+                 // Check if block has a courtyard
+                 if (courtyardDepth >= 5 && blockArea >= this.buildingParams.minArea * 3) {
+                     const innerBoundary = PolygonUtil.resizeGeometry(block, -courtyardDepth, true);
 
-        if (keepLot) {
-            finalLots.push(lot);
-        }
-    }
+                     if (innerBoundary && innerBoundary.length >= 3) {
+                         // Count how many vertices of the lot are inside the courtyard
+                         let verticesInside = 0;
+                         for (const vertex of lot) {
+                             if (PolygonUtil.insidePolygon(vertex, innerBoundary)) {
+                                 verticesInside++;
+                             }
+                         }
 
-    console.log(`Main blocks: ${mainBlocks.length}`);
-    console.log(`Total lots after divide: ${allDividedLots.length}`);
-    console.log(`Perimeter lots kept: ${finalLots.length}`);
-    console.log(`Lots removed: ${allDividedLots.length - finalLots.length} (${((allDividedLots.length - finalLots.length) / allDividedLots.length * 100).toFixed(1)}%)`);
+                         // Also check the center
+                         const centerInside = PolygonUtil.insidePolygon(lotCenter, innerBoundary);
 
-    // Set the final lots
-    this.polygonFinder.polygons.length = 0;
-    Array.prototype.push.apply(this.polygonFinder.polygons, finalLots);
+                         // Remove lot if center is inside OR if more than half the vertices are inside
+                         if (centerInside || verticesInside > lot.length / 2) {
+                             keepLot = false;
+                         }
+                     }
+                 }
+                 break; // Found parent block
+             }
+         }
 
-} else {
-    // Normal divide mode
-    await this.polygonFinder.divide(animate);
-}
+         if (keepLot) {
+             finalLots.push(lot);
+         }
+     }
+
+     console.log(`Main blocks: ${mainBlocks.length}`);
+     console.log(`Total lots after divide: ${allDividedLots.length}`);
+     console.log(`Perimeter lots kept: ${finalLots.length}`);
+     console.log(`Lots removed: ${allDividedLots.length - finalLots.length} (${((allDividedLots.length - finalLots.length) / allDividedLots.length * 100).toFixed(1)}%)`);
+
+     // Set the final lots
+     this.polygonFinder.polygons.length = 0;
+     Array.prototype.push.apply(this.polygonFinder.polygons, finalLots);
+
+ } else {
+     // Normal divide mode
+     await this.polygonFinder.divide(animate);
+ }
 
         this.redraw();
 
