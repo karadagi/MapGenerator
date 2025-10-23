@@ -22,14 +22,16 @@ export default class TensorFieldGUI extends TensorField {
         // For custom naming of gui buttons
         const tensorFieldGuiObj = {
             reset: (): void => this.reset(),
-            setRecommended: (): void => this.setRecommended(),
+            setParis: (): void => this.setParis(),
+            setBarcelona: (): void => this.setBarcelona(),
             addRadial: (): void => this.addRadialRandom(),
             addGrid: (): void => this.addGridRandom(),
         };
 
         this.guiFolder.add(tensorFieldGuiObj, 'reset');
         this.guiFolder.add(this, 'smooth');
-        this.guiFolder.add(tensorFieldGuiObj, 'setRecommended');
+        this.guiFolder.add(tensorFieldGuiObj, 'setParis');
+        this.guiFolder.add(tensorFieldGuiObj, 'setBarcelona');
         this.guiFolder.add(tensorFieldGuiObj, 'addRadial');
         this.guiFolder.add(tensorFieldGuiObj, 'addGrid');
     }
@@ -37,7 +39,7 @@ export default class TensorFieldGUI extends TensorField {
     /**
      * 4 Grids, one radial
      */
-    setRecommended(): void {
+    setParis(): void {
         this.reset();
         const size = this.domainController.worldDimensions.multiplyScalar(this.TENSOR_SPAWN_SCALE);
         const newOrigin = this.domainController.worldDimensions
@@ -48,13 +50,26 @@ export default class TensorFieldGUI extends TensorField {
         this.addGridAtLocation(newOrigin.clone().add(new Vector(size.x, 0)));
         this.addGridAtLocation(newOrigin.clone().add(new Vector(0, size.y)));
         this.addRadialRandom();
+        this.addRadialRandom();
+    }
+
+    setBarcelona(): void {
+        this.reset();
+        const size = this.domainController.worldDimensions.multiplyScalar(this.TENSOR_SPAWN_SCALE);
+        const newOrigin = this.domainController.worldDimensions
+            .multiplyScalar((1 - this.TENSOR_SPAWN_SCALE) / 2)
+            .add(this.domainController.origin);
+        this.addGridCartesian(newOrigin);
+        this.addGridCartesian(newOrigin.clone().add(size));
+        this.addGridCartesian(newOrigin.clone().add(new Vector(size.x, 0)));
+        this.addGridCartesian(newOrigin.clone().add(new Vector(0, size.y)));
     }
 
     addRadialRandom(): void {
         const width = this.domainController.worldDimensions.x;
         this.addRadial(this.randomLocation(),
-            Util.randomRange(width / 10, width / 5),  // Size
-            Util.randomRange(50));  // Decay
+            Util.randomRange(width / 6, width / 4),  // Size
+            Util.randomRange(30));  // Decay
     }
 
     addGridRandom(): void {
@@ -64,11 +79,17 @@ export default class TensorFieldGUI extends TensorField {
     private addGridAtLocation(location: Vector): void {
         const width = this.domainController.worldDimensions.x;
         this.addGrid(location,
+            Util.randomRange(width / 4, width / 2),  // Size
+            Util.randomRange(50),  // Decay
+            Util.randomRange(Math.PI / 2));
+    }
+    private addGridCartesian(location: Vector): void {
+        const width = this.domainController.worldDimensions.x;
+        this.addGrid(location,
             Util.randomRange(width / 4, width),  // Size
             Util.randomRange(50),  // Decay
             Util.randomRange(Math.PI / 2));
     }
-
     /**
      * World-space random location for tensor field spawn
      * Sampled from middle of screen (shrunk rectangle)
@@ -82,7 +103,7 @@ export default class TensorFieldGUI extends TensorField {
 
     private getCrossLocations(): Vector[] {
         // Gets grid of points for vector field vis in world space
-        const diameter = this.TENSOR_LINE_DIAMETER / this.domainController.zoom;
+        const diameter = this.TENSOR_LINE_DIAMETER / this.domainController.ZOOM;
         const worldDimensions = this.domainController.worldDimensions;
         const nHor = Math.ceil(worldDimensions.x / diameter) + 1; // Prevent pop-in
         const nVer = Math.ceil(worldDimensions.y / diameter) + 1;
@@ -110,11 +131,11 @@ export default class TensorFieldGUI extends TensorField {
 
     draw(canvas: DefaultCanvasWrapper): void {
         // Draw tensor field
-        canvas.setFillStyle('black');
+        canvas.setFillStyle('white');
         canvas.clearCanvas();
 
-        canvas.setStrokeStyle('white');
-        canvas.setLineWidth(1);
+        canvas.setStrokeStyle('black');
+        canvas.setLineWidth(.5);
         const tensorPoints = this.getCrossLocations();
         tensorPoints.forEach(p => {
             const t = this.samplePoint(p);
@@ -125,17 +146,17 @@ export default class TensorFieldGUI extends TensorField {
         // Draw centre points of fields
         if (this.drawCentre) {
             canvas.setFillStyle('red');
-            this.getBasisFields().forEach(field => 
+            this.getBasisFields().forEach(field =>
                 field.FIELD_TYPE === FIELD_TYPE.Grid ?
-                canvas.drawSquare(this.domainController.worldToScreen(field.centre), 7) :
-                canvas.drawCircle(this.domainController.worldToScreen(field.centre), 7))
+                canvas.drawSquare(this.domainController.worldToScreen(field.centre), 10) :
+                canvas.drawCircle(this.domainController.worldToScreen(field.centre), 10))
         }
     }
 
     protected addField(field: BasisField): void {
         super.addField(field);
         const folder = this.guiFolder.addFolder(`${field.FOLDER_NAME}`);
-        
+
         // Function to deregister from drag controller
         const deregisterDrag = this.dragController.register(
             () => field.centre,
@@ -143,7 +164,7 @@ export default class TensorFieldGUI extends TensorField {
             field.dragStartListener.bind(field)
         );
         const removeFieldObj = {remove: () => this.removeFieldGUI(field, deregisterDrag)};
-        
+
         // Give dat gui removeField button
         folder.add(removeFieldObj, 'remove');
         field.setGui(this.guiFolder, folder);

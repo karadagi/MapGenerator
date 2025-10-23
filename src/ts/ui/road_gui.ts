@@ -47,7 +47,7 @@ export default class RoadGUI {
         const folder = this.guiFolder.addFolder(this.folderName);
         folder.add(roadGUI, 'Generate');
         // folder.add(roadGUI, 'JoinDangling');
-        
+
         const paramsFolder = folder.addFolder('Params');
         paramsFolder.add(this.params, 'dsep');
         paramsFolder.add(this.params, 'dtest');
@@ -95,19 +95,19 @@ export default class RoadGUI {
     async generateRoads(animate=false): Promise<unknown> {
         this.preGenerateCallback();
 
-        this.domainController.zoom = this.domainController.zoom / Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM = this.domainController.ZOOM / Util.DRAW_INFLATE_AMOUNT;
         this.streamlines = new StreamlineGenerator(
             this.integrator, this.domainController.origin,
             this.domainController.worldDimensions, Object.assign({},this.params));
-        this.domainController.zoom = this.domainController.zoom * Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM = this.domainController.ZOOM * Util.DRAW_INFLATE_AMOUNT;
 
         for (const s of this.existingStreamlines) {
-            this.streamlines.addExistingStreamlines(s.streamlines)   
+            this.streamlines.addExistingStreamlines(s.streamlines)
         }
 
         this.closeTensorFolder();
         this.redraw();
-        
+
         return this.streamlines.createAllStreamlines(animate).then(() => this.postGenerateCallback());
     }
 

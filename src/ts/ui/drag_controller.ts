@@ -50,7 +50,7 @@ export default class DragController {
         this._isDragging = true;
         // Transform screen space to world space
         const origin = this.domainController.screenToWorld(new Vector(event.x0, event.y0));
-        
+
         let closestDistance = Infinity;
         this.draggables.forEach(draggable => {
             const d = draggable.getCentre().distanceTo(origin);
@@ -61,7 +61,7 @@ export default class DragController {
         });
 
         // Zoom screen size to world size for consistent drag distance while zoomed in
-        const scaledDragDistance = this.MIN_DRAG_DISTANCE / this.domainController.zoom;
+        const scaledDragDistance = this.MIN_DRAG_DISTANCE / this.domainController.ZOOM;
 
         if (closestDistance > scaledDragDistance) {
             this.currentlyDragging = null;

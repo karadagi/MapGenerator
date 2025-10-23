@@ -24,14 +24,14 @@ import PolygonUtil from '../impl/polygon_util';
  */
 export default class MainGUI {
     private numBigParks: number = 2;
-    private numSmallParks: number = 0;
+    private numSmallParks: number = 32;
     private clusterBigParks: boolean = false;
 
     private domainController = DomainController.getInstance();
     private intersections: Vector[] = [];
     private bigParks: Vector[][] = [];
     private smallParks: Vector[][] = [];
-    private animate: boolean = true;
+    private animate: boolean = false;
     private animationSpeed: number = 30;
 
     private coastline: WaterGUI;
@@ -102,7 +102,7 @@ export default class MainGUI {
         this.mainRoads = new RoadGUI(this.mainParams, integrator, this.guiFolder, closeTensorFolder, 'Main', redraw).initFolder();
         this.majorRoads = new RoadGUI(this.majorParams, integrator, this.guiFolder, closeTensorFolder, 'Major', redraw, this.animate).initFolder();
         this.minorRoads = new RoadGUI(this.minorParams, integrator, this.guiFolder, closeTensorFolder, 'Minor', redraw, this.animate).initFolder();
-        
+
         const parks = guiFolder.addFolder('Parks');
         parks.add({Generate: () => {
             this.buildings.reset();
@@ -207,10 +207,10 @@ export default class MainGUI {
             this.smallParks = [];
             if (polygons.length > this.numBigParks) {
                 if (this.clusterBigParks) {
-                    // Group in adjacent polygons 
+                    // Group in adjacent polygons
                     const parkIndex = Math.floor(Math.random() * (polygons.length - this.numBigParks));
                     for (let i = parkIndex; i < parkIndex + this.numBigParks; i++) {
-                        this.bigParks.push(polygons[i]);    
+                        this.bigParks.push(polygons[i]);
                     }
                 } else {
                     for (let i = 0; i < this.numBigParks; i++) {
@@ -254,7 +254,7 @@ export default class MainGUI {
             const buildingsChanged = this.buildings.update();
             continueUpdate = minorChanged || majorChanged || mainChanged || buildingsChanged;
         }
-        
+
         this.redraw = this.redraw || continueUpdate;
     }
 
@@ -273,7 +273,7 @@ export default class MainGUI {
         style.lots = this.buildings.lots;
 
         if (style instanceof DefaultStyle && style.showBuildingModels || style instanceof RoughStyle) {
-            style.buildingModels = this.buildings.models;    
+            style.buildingModels = this.buildings.models;
         }
 
         style.parks = [];
@@ -313,18 +313,18 @@ export default class MainGUI {
     }
 
     public get minorRoadPolygons(): Vector[][] {
-        return this.minorRoads.roads.map(r => PolygonUtil.resizeGeometry(r, 1 * this.domainController.zoom, false));
+        return this.minorRoads.roads.map(r => PolygonUtil.resizeGeometry(r, 1 * this.domainController.ZOOM, false));
     }
 
     public get majorRoadPolygons(): Vector[][] {
-        return this.majorRoads.roads.concat([this.coastline.secondaryRiver]).map(r => PolygonUtil.resizeGeometry(r, 2 * this.domainController.zoom, false));
+        return this.majorRoads.roads.concat([this.coastline.secondaryRiver]).map(r => PolygonUtil.resizeGeometry(r, 2 * this.domainController.ZOOM, false));
     }
 
     public get mainRoadPolygons(): Vector[][] {
-        return this.mainRoads.roads.concat(this.coastline.roads).map(r => PolygonUtil.resizeGeometry(r, 2.5 * this.domainController.zoom, false));
+        return this.mainRoads.roads.concat(this.coastline.roads).map(r => PolygonUtil.resizeGeometry(r, 2.5 * this.domainController.ZOOM, false));
     }
 
     public get coastlinePolygon(): Vector[] {
-        return PolygonUtil.resizeGeometry(this.coastline.coastline, 15 * this.domainController.zoom, false);
+        return PolygonUtil.resizeGeometry(this.coastline.coastline, 15 * this.domainController.ZOOM, false);
     }
 }

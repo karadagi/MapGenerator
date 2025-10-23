@@ -36,7 +36,7 @@ export default class WaterGUI extends RoadGUI {
     initFolder(): WaterGUI {
         const folder = this.guiFolder.addFolder(this.folderName);
         folder.add({Generate: () => this.generateRoads()}, 'Generate');
-        
+
         const coastParamsFolder = folder.addFolder('CoastParams');
         coastParamsFolder.add(this.params.coastNoise, 'noiseEnabled');
         coastParamsFolder.add(this.params.coastNoise, 'noiseSize');
@@ -45,7 +45,7 @@ export default class WaterGUI extends RoadGUI {
         riverParamsFolder.add(this.params.riverNoise, 'noiseEnabled');
         riverParamsFolder.add(this.params.riverNoise, 'noiseSize');
         riverParamsFolder.add(this.params.riverNoise, 'noiseAngle');
-        
+
         folder.add(this.params, 'simplifyTolerance');
         const devParamsFolder = folder.addFolder('Dev');
         this.addDevParamsToFolder(this.params, devParamsFolder);
@@ -55,16 +55,16 @@ export default class WaterGUI extends RoadGUI {
     generateRoads(): Promise<void> {
         this.preGenerateCallback();
 
-        this.domainController.zoom = this.domainController.zoom / Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM = this.domainController.ZOOM / Util.DRAW_INFLATE_AMOUNT;
         this.streamlines = new WaterGenerator(
             this.integrator, this.domainController.origin,
             this.domainController.worldDimensions,
             Object.assign({},this.params), this.tensorField);
-        this.domainController.zoom = this.domainController.zoom * Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM = this.domainController.ZOOM * Util.DRAW_INFLATE_AMOUNT;
 
         this.streamlines.createCoast();
         this.streamlines.createRiver();
-       
+
         this.closeTensorFolder();
         this.redraw();
         this.postGenerateCallback();
@@ -108,5 +108,5 @@ export default class WaterGUI extends RoadGUI {
         folder.add(params, 'dcirclejoin');
         folder.add(params, 'joinangle');
     }
-    
+
 }

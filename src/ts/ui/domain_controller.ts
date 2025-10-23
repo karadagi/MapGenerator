@@ -9,12 +9,12 @@ import Util from '../util';
 export default class DomainController {
     private static instance: DomainController;
 
-    private readonly ZOOM_SPEED = 0.96;
+    private readonly ZOOM_SPEED = .8;
     private readonly SCROLL_DELAY = 100;
 
     // Location of screen origin in world space
     private _origin: Vector = Vector.zeroVector();
-    
+
     // Screen-space width and height
     private _screenDimensions = Vector.zeroVector();
 
@@ -43,9 +43,9 @@ export default class DomainController {
                 const delta: number = e.deltaY;
                 // TODO scale by value of delta
                 if (delta > 0) {
-                    this.zoom = this._zoom * this.ZOOM_SPEED;
+                    this.ZOOM = this._zoom * this.ZOOM_SPEED;
                 } else {
-                    this.zoom = this._zoom / this.ZOOM_SPEED;
+                    this.ZOOM = this._zoom / this.ZOOM_SPEED;
                 }
             }
         });
@@ -88,7 +88,7 @@ export default class DomainController {
         return this._origin.clone();
     }
 
-    get zoom(): number {
+    get ZOOM(): number {
         return this._zoom;
     }
 
@@ -108,7 +108,7 @@ export default class DomainController {
         this._screenDimensions.copy(v);
     }
 
-    set zoom(z: number) {
+    set ZOOM(z: number) {
         if (z >= 0.3 && z <= 20) {
             this.moved = true;
             const oldWorldSpaceMidpoint = this.origin.add(this.worldDimensions.divideScalar(2));

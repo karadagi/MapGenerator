@@ -19,7 +19,7 @@ class Main {
     private readonly STARTING_WIDTH = 1440;  // Initially zooms in if width > STARTING_WIDTH
 
     // UI
-    private gui: dat.GUI = new dat.GUI({width: 300});
+    private gui: dat.GUI = new dat.GUI({width: 720});
     private tensorFolder: dat.GUI;
     private roadsFolder: dat.GUI;
     private styleFolder: dat.GUI;
@@ -56,9 +56,9 @@ class Main {
 
     constructor() {
         // GUI Setup
-        const zoomController = this.gui.add(this.domainController, 'zoom');
+        const zoomController = this.gui.add(this.domainController, 'ZOOM');
         this.domainController.setZoomUpdate(() => zoomController.updateDisplay());
-        this.gui.add(this, 'generate');
+        this.gui.add(this, 'RANDOMLY_GENERATE');
 
         this.tensorFolder = this.gui.addFolder('Tensor Field');
         this.roadsFolder = this.gui.addFolder('Map');
@@ -69,11 +69,11 @@ class Main {
         // Canvas setup
         this.canvas = document.getElementById(Util.CANVAS_ID) as HTMLCanvasElement;
         this.tensorCanvas = new DefaultCanvasWrapper(this.canvas);
-        
+
         // Make sure we're not too zoomed out for large resolutions
         const screenWidth = this.domainController.screenDimensions.x;
         if (screenWidth > this.STARTING_WIDTH) {
-            this.domainController.zoom = screenWidth / this.STARTING_WIDTH;
+            this.domainController.ZOOM = screenWidth / this.STARTING_WIDTH;
         }
 
         // Style setup
@@ -90,7 +90,7 @@ class Main {
             this.previousFrameDrawTensor = true;
             this._style.showBuildingModels = val;
         });
-        
+
         this.styleFolder.add(this, 'showFrame').onChange((val: boolean) => {
             this.previousFrameDrawTensor = true;
             this._style.showFrame = val;
@@ -114,28 +114,32 @@ class Main {
 
         this.optionsFolder.add(this.tensorField, 'drawCentre');
         this.optionsFolder.add(this, 'highDPI').onChange((high: boolean) => this.changeCanvasScale(high));
-        
+
         this.downloadsFolder.add(this, 'imageScale', 1, 5).step(1);
-        this.downloadsFolder.add({"PNG": () => this.downloadPng()}, 'PNG');  // This allows custom naming of button
+
+        // --- MODIFIED: Pass a base filename to downloadPng ---
+        this.downloadsFolder.add({"PNG": () => this.downloadPng('map.png')}, 'PNG');
+
         this.downloadsFolder.add({"SVG": () => this.downloadSVG()}, 'SVG');
         this.downloadsFolder.add({"STL": () => this.downloadSTL()}, 'STL');
         this.downloadsFolder.add({"Heightmap": () => this.downloadHeightmap()}, 'Heightmap');
 
         this.changeColourScheme(this.colourScheme);
-        this.tensorField.setRecommended();
+        this.tensorField.setParis();
+        this.RANDOMLY_GENERATE();
         requestAnimationFrame(() => this.update());
     }
 
     /**
      * Generate an entire map with no control over the process
      */
-    generate(): void {
+    RANDOMLY_GENERATE(): void {
         if (!this.firstGenerate) {
-            this.tensorField.setRecommended();
+            this.tensorField.setParis();
         } else {
             this.firstGenerate = false;
         }
-        
+
         this.mainGui.generateEverything();
     }
 
@@ -172,6 +176,30 @@ class Main {
         this.domainController.cameraDirection = new Vector(this.cameraX / 10, this.cameraY / 10);
     }
 
+    // --- NEW: Helper function to get a file-friendly timestamp ---
+    private getTimestamp(): string {
+        const d = new Date();
+        const Y = d.getFullYear();
+        const M = (d.getMonth() + 1).toString().padStart(2, '0');
+        const D = d.getDate().toString().padStart(2, '0');
+        const h = d.getHours().toString().padStart(2, '0');
+        const m = d.getMinutes().toString().padStart(2, '0');
+        const s = d.getSeconds().toString().padStart(2, '0');
+        return `${Y}${M}${D}_${h}${m}${s}`;
+    }
+
+    // --- NEW: Helper function to inject timestamp into a filename ---
+    private getTimestampedFilename(base: string): string {
+        const timestamp = this.getTimestamp();
+        const parts = base.split('.');
+        if (parts.length < 2) {
+            return `${base}_${timestamp}`; // No extension
+        }
+        const ext = parts.pop();
+        const name = parts.join('.');
+        return `${name}_${timestamp}.${ext}`;
+    }
+
     downloadSTL(): void {
         // All in screen space
         const extendScreenX = this.domainController.screenDimensions.x * ((Util.DRAW_INFLATE_AMOUNT - 1) / 2);
@@ -199,27 +227,29 @@ class Main {
         });
     }
 
+    // --- MODIFIED: Uses getTimestampedFilename ---
     private downloadFile(filename: string, file: any): void {
-        saveAs(file, filename);
+        saveAs(file, this.getTimestampedFilename(filename));
     }
 
     /**
      * Downloads image of map
      * Draws onto hidden canvas at requested resolution
      */
-    downloadPng(): void {
+    // --- MODIFIED: Accepts a base filename and adds timestamp ---
+    downloadPng(filename: string = 'map.png'): void {
         const c = document.getElementById(Util.IMG_CANVAS_ID) as HTMLCanvasElement;
 
         // Draw
         if (this.showTensorField()) {
             this.tensorField.draw(new DefaultCanvasWrapper(c, this.imageScale, false));
-        } else {            
+        } else {
             const imgCanvas = this._style.createCanvasWrapper(c, this.imageScale, false);
             this.mainGui.draw(this._style, true, imgCanvas);
         }
 
         const link = document.createElement('a');
-        link.download = 'map.png';
+        link.download = this.getTimestampedFilename(filename); // Use helper
         link.href = (document.getElementById(Util.IMG_CANVAS_ID) as any).toDataURL();
         link.click();
     }
@@ -227,10 +257,11 @@ class Main {
     /**
      * Same as downloadPng but uses Heightmap style
      */
+    // --- MODIFIED: Passes the correct base filename to downloadPng ---
     downloadHeightmap(): void {
         const oldColourScheme = this.colourScheme;
         this.changeColourScheme("Heightmap");
-        this.downloadPng();
+        this.downloadPng('height_map.png'); // Pass correct name
         this.changeColourScheme(oldColourScheme);
     }
 
@@ -238,6 +269,7 @@ class Main {
      * Downloads svg of map
      * Draws onto hidden svg at requested resolution
      */
+    // --- MODIFIED: Uses getTimestampedFilename ---
     downloadSVG(): void {
         const c = document.getElementById(Util.IMG_CANVAS_ID) as HTMLCanvasElement;
         const svgElement = document.getElementById(Util.SVG_ID);
@@ -269,7 +301,7 @@ class Main {
         const url = "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(source);
 
         const link = document.createElement('a');
-        link.download = 'map.svg';
+        link.download = this.getTimestampedFilename('svgmap.svg'); // Use helper
         link.href = url;
         link.click();
 
@@ -290,7 +322,7 @@ class Main {
         } else {
             // Disable field drag and drop
             this.dragController.setDragDisabled(true);
-            
+
             if (this.previousFrameDrawTensor === true) {
                 this.previousFrameDrawTensor = false;
 

@@ -15,7 +15,7 @@ export default class Util {
     // Refresh dat.GUI values
     static updateGui(gui: dat.GUI): void {
         if (gui.__controllers) {
-            gui.__controllers.forEach(c => c.updateDisplay());    
+            gui.__controllers.forEach(c => c.updateDisplay());
         }
         if (gui.__folders) {
             for (const folderName in gui.__folders) {

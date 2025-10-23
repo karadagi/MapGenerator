@@ -43,7 +43,7 @@ class BuildingModels {
      * Recalculated when the camera moves
      */
     setBuildingProjections(): void {
-        const d = 1000 / this.domainController.zoom;
+        const d = 1000 / this.domainController.ZOOM;
         const cameraPos = this.domainController.getCameraPosition();
         for (const b of this._buildingModels) {
             b.lotScreen = b.lotWorld.map(v => this.domainController.worldToScreen(v.clone()));
@@ -100,6 +100,8 @@ export default class Buildings {
                 private dstep: number,
                 private _animate: boolean) {
         folder.add({'Add Buildings': () => this.generate(this._animate)}, 'Add Buildings');
+        folder.add(this._buildingModels.height, 'height');
+        folder.add(this.buildingParams, 'maxLength');
         folder.add(this.buildingParams, 'minArea');
         folder.add(this.buildingParams, 'shrinkSpacing');
         folder.add(this.buildingParams, 'chanceNoDivide');

@@ -49,7 +49,6 @@ export default class ModelGenerator {
             this.resolve = resolve;
             const JSZip = require("jszip");
             this.zip = new JSZip();
-            this.zip.file("model/README.txt", "For a tutorial on putting these models together to create a city, go to https://maps.probabletrain.com/#/stl");
 
             this.groundMesh = this.polygonToMesh(this.ground, this.groundLevel);
             this.groundBsp = CSG.fromMesh(this.groundMesh);
@@ -107,7 +106,7 @@ export default class ModelGenerator {
                     this.threeToBlender(mesh);
                     const buildingsSTL = this.exportSTL.fromMesh(mesh);
                     this.zip.file("model/roads.stl", buildingsSTL);
-                    
+
                     this.setState(ModelGeneratorStates.ADD_BLOCKS);
                     this.polygonsToProcess = [...this.blocks];
                     break;
@@ -127,7 +126,7 @@ export default class ModelGenerator {
 
                     this.setState(ModelGeneratorStates.ADD_BUILDINGS);
                     this.buildingsToProcess = [...this.buildings];
-                    break; 
+                    break;
                 }
 
                 const block = this.polygonsToProcess.pop();

@@ -17,7 +17,7 @@
 // mainWidth?: number;
 // zoomBuildings?: boolean;
 // buildingModels?: boolean;
-// 
+//
 // Scheme name startsWith 'Drawn' means scheme will use RoughJS canvas
 // // Scheme name startsWith 'Heightmap' draws heightmap
 
@@ -30,11 +30,12 @@
         "minorRoadColour": "rgb(238,238,238)",
         "grassColour": "#c5e8c5",
         "buildingModels": true,
-        "zoomBuildings": true,
+        "zoomBuildings": false,
         "showFrame": true,
         "outlineSize": 2,
         "buildingColour": "rgb(240,240,240)",
-        "buildingSideColour": "rgb(200,200,200)",
+        "buildingSideColour": "rgb(70,70,70)",
+        "buildingStroke": "rgb(0,0,0)",
         //"mainRoadOutline": "#282828",
         //"mainRoadColour": "#FAFA7A",
     },
@@ -130,7 +131,7 @@
         "bgColour": "rgb(30,30,30)",
         "seaColour": "rgb(20,20,20)",
         "minorRoadColour": "rgb(28,28,28)",
-        "zoomBuildings": false, 
+        "zoomBuildings": false,
         "buildingModels": true,
     },
     "Paper": {

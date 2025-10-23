@@ -138,11 +138,11 @@ export class DefaultStyle extends Style {
     public draw(canvas=this.canvas as DefaultCanvasWrapper): void {
         let bgColour;
         if (this.colourScheme.zoomBuildings) {
-            bgColour = this.domainController.zoom >= 2 ? this.colourScheme.bgColourIn : this.colourScheme.bgColour;
+            bgColour = this.domainController.ZOOM >= 2 ? this.colourScheme.bgColourIn : this.colourScheme.bgColour;
         } else {
             bgColour = this.colourScheme.bgColour;
         }
-        
+
 
         canvas.setFillStyle(bgColour);
         canvas.clearCanvas();
@@ -155,7 +155,7 @@ export class DefaultStyle extends Style {
 
         // Coastline
         canvas.setStrokeStyle(bgColour);
-        canvas.setLineWidth(30 * this.domainController.zoom);
+        canvas.setLineWidth(30 * this.domainController.ZOOM);
         canvas.drawPolyline(this.coastline);
 
         // Parks
@@ -171,31 +171,31 @@ export class DefaultStyle extends Style {
 
         // Road outline
         canvas.setStrokeStyle(this.colourScheme.minorRoadOutline);
-        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.minorWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.minorWidth * this.domainController.ZOOM);
         for (const s of this.minorRoads) canvas.drawPolyline(s);
 
         canvas.setStrokeStyle(this.colourScheme.majorRoadOutline);
-        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.majorWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.majorWidth * this.domainController.ZOOM);
         for (const s of this.majorRoads) canvas.drawPolyline(s);
         canvas.drawPolyline(this.secondaryRiver);
 
         canvas.setStrokeStyle(this.colourScheme.mainRoadOutline);
-        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.mainWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.outlineSize + this.colourScheme.mainWidth * this.domainController.ZOOM);
         for (const s of this.mainRoads) canvas.drawPolyline(s);
         for (const s of this.coastlineRoads) canvas.drawPolyline(s);
 
         // Road inline
         canvas.setStrokeStyle(this.colourScheme.minorRoadColour);
-        canvas.setLineWidth(this.colourScheme.minorWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.minorWidth * this.domainController.ZOOM);
         for (const s of this.minorRoads) canvas.drawPolyline(s);
 
         canvas.setStrokeStyle(this.colourScheme.majorRoadColour);
-        canvas.setLineWidth(this.colourScheme.majorWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.majorWidth * this.domainController.ZOOM);
         for (const s of this.majorRoads) canvas.drawPolyline(s);
         canvas.drawPolyline(this.secondaryRiver);
 
         canvas.setStrokeStyle(this.colourScheme.mainRoadColour);
-        canvas.setLineWidth(this.colourScheme.mainWidth * this.domainController.zoom);
+        canvas.setLineWidth(this.colourScheme.mainWidth * this.domainController.ZOOM);
         for (const s of this.mainRoads) canvas.drawPolyline(s);
         for (const s of this.coastlineRoads) canvas.drawPolyline(s);
 
@@ -211,29 +211,43 @@ export class DefaultStyle extends Style {
                 canvas.setStrokeStyle(`rgb(${parsedRgb[0]},${parsedRgb[1]},${parsedRgb[2]})`);
                 canvas.drawPolygon(b.lotScreen);
             }
-        } else {
-            // Buildings
-            if (!this.colourScheme.zoomBuildings || this.domainController.zoom >= 2) {
-                canvas.setFillStyle(this.colourScheme.buildingColour);
-                canvas.setStrokeStyle(this.colourScheme.buildingStroke);
-                for (const b of this.lots) canvas.drawPolygon(b);
-            }
+          } else {
+              // Buildings
+              if (!this.colourScheme.zoomBuildings || this.domainController.ZOOM >= 2) {
+                  canvas.setFillStyle(this.colourScheme.buildingColour);
+                  // Use the variable as requested
+                  canvas.setStrokeStyle(this.colourScheme.buildingStroke);
+                  for (const b of this.lots) canvas.drawPolygon(b);
+              }
 
-            // Pseudo-3D
-            if (this.colourScheme.buildingModels && (!this.colourScheme.zoomBuildings || this.domainController.zoom >= 2.5)) {
-                canvas.setFillStyle(this.colourScheme.buildingSideColour);
-                canvas.setStrokeStyle(this.colourScheme.buildingSideColour);
+              // Pseudo-3D
+              if (this.colourScheme.buildingModels && (!this.colourScheme.zoomBuildings || this.domainController.ZOOM >= 2.5)) {
 
-                // This is a cheap approximation that often creates visual artefacts
-                // Draws building sides, then rooves instead of properly clipping polygons etc.
-                for (const b of this.buildingModels) {
-                    for (const s of b.sides) canvas.drawPolygon(s);
-                }
-                canvas.setFillStyle(this.colourScheme.buildingColour);
-                canvas.setStrokeStyle(this.colourScheme.buildingStroke);
-                for (const b of this.buildingModels) canvas.drawPolygon(b.roof);
-            }
-        }
+                  // --- Draw SIDES (Sorted) ---
+                  canvas.setFillStyle(this.colourScheme.buildingSideColour);
+                  canvas.setStrokeStyle(this.colourScheme.buildingStroke); // Use variable
+
+                  // --- THIS IS THE FIX ---
+                  // Sort the sides from back-to-front
+                  const allSidesDistances: any[] = [];
+                  const camera = this.domainController.getCameraPosition();
+                  for (const b of this.buildingModels) {
+                      for (const s of b.sides) {
+                          const averagePoint = s[0].clone().add(s[1]).divideScalar(2);
+                          allSidesDistances.push([averagePoint.distanceToSquared(camera), s]);
+                      }
+                  }
+                  allSidesDistances.sort((a, b) => b[0] - a[0]); // Sort far-to-near
+                  for (const p of allSidesDistances) canvas.drawPolygon(p[1]);
+                  // --- END OF FIX ---
+
+
+                  // --- Draw ROOFS (On Top) ---
+                  canvas.setFillStyle(this.colourScheme.buildingColour);
+                  canvas.setStrokeStyle(this.colourScheme.buildingStroke); // Use variable
+                  for (const b of this.buildingModels) canvas.drawPolygon(b.roof);
+              }
+          }
 
         if (this.showFrame) {
             canvas.setFillStyle(this.colourScheme.frameColour);
@@ -338,10 +352,10 @@ export class RoughStyle extends Style {
         // Buildings
         if (!this.dragging) {
             // Lots
-            if (!this.colourScheme.zoomBuildings || this.domainController.zoom >= 2) {
+            if (!this.colourScheme.zoomBuildings || this.domainController.ZOOM >= 2) {
                 // Lots
                 canvas.setOptions({
-                    roughness: 1.2,
+                    roughness: 1,
                     stroke: this.colourScheme.buildingStroke,
                     strokeWidth: 1,
                     fill: '',
@@ -350,10 +364,10 @@ export class RoughStyle extends Style {
             }
 
             // Pseudo-3D
-            if (this.colourScheme.buildingModels && (!this.colourScheme.zoomBuildings || this.domainController.zoom >= 2.5)) {
+            if (this.colourScheme.buildingModels && (!this.colourScheme.zoomBuildings || this.domainController.ZOOM >= 2.5)) {
                 // Pseudo-3D
                 canvas.setOptions({
-                    roughness: 1.2,
+                    roughness: 1,
                     stroke: this.colourScheme.buildingStroke,
                     strokeWidth: 1,
                     fill: this.colourScheme.buildingSideColour,
@@ -372,7 +386,7 @@ export class RoughStyle extends Style {
                 for (const p of allSidesDistances) canvas.drawPolygon(p[1]);
 
                 canvas.setOptions({
-                    roughness: 1.2,
+                    roughness: 1,
                     stroke: this.colourScheme.buildingStroke,
                     strokeWidth: 1,
                     fill: this.colourScheme.buildingColour,
