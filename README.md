@@ -1,15 +1,12 @@
 <br />
 <p align="center">
-  <a href="https://github.com/probabletrain/mapgenerator">
-      <img src="docs/images/logo.png" alt="Logo" width="125" height="125">
-  </a>
 
   <h3 align="center">Map Generator</h3>
 
   <p align="center">
-    Create procedural American-style cities
+    Create procedural cities
     <br />
-    <a href="https://probabletrain.itch.io/city-generator"><strong>Open Generator »</strong></a>
+    <a href="[https://karadagi.github.io/MapGenerator/]"><strong>Open Generator »</strong></a>
     <br />
     <br />
     <a href="https://maps.probabletrain.com" target="_blank">Read the Docs</a>
