@@ -2,7 +2,7 @@ name: Deploy dist folder to GitHub Pages
 on:
   push:
     branches:
-      - main  # or master, depending on your default branch
+      - master  # or master, depending on your default branch
 permissions:
   contents: write
 jobs:
