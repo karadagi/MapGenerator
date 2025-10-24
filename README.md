@@ -2,23 +2,16 @@
 <p align="center">
 
   <h3 align="center">Map Generator</h3>
-
-  <p align="center">
-    Create procedural cities
+    <br />
+  <p align="justify">
+    This tool procedurally generates images of city maps. The process can be automated, or controlled at each stage give you finer control over the output. 3D models of generated cities can be downloaded as a `.stl`. The download is a `zip` containing multiple `.stl` files for different components of the map. Images of generated cities can be downloaded as a `.png` or an `.svg`. There are a few choices for drawing style, ranging from colour themes similar to Google or Apple maps, to a hand-drawn sketch.
+    <br />
     <br />
     <a href="https://karadagi.github.io/MapGenerator/"><strong>Open Generator »</strong></a>
     <br />
     <br />
   </p>
 </p>
-
-
-## About The Project
-
-This tool procedurally generates images of city maps. The process can be automated, or controlled at each stage give you finer control over the output.
-3D models of generated cities can be downloaded as a `.stl`. The download is a `zip` containing multiple `.stl` files for different components of the map.
-Images of generated cities can be downloaded as a `.png` or an `.svg`. There are a few choices for drawing style, ranging from colour themes similar to Google or Apple maps, to a hand-drawn sketch.
-
 
 ### Built With
 
@@ -47,7 +40,7 @@ npm install --global gulp-cli
  
 1. Clone the mapgenerator
 ```sh
-git clone https://github.com/probabletrain/mapgenerator.git
+git clone https://github.com/karadagi/MapGenerator.git
 ```
 2. Install NPM packages
 ```sh
@@ -56,9 +49,9 @@ npm install
 ```
 3. Build with Gulp. This will watch for changes to any Typescript files. If you edit the HTML or CSS you will have to rerun this command. [Gulp Notify](https://github.com/mikaelbr/gulp-notify) sends a notification whenever a build finishes.
 ```
-gulp
+npx gulp
 ```
-4. Open `dist/index.html` in a web browser, refresh the page whenever the project is rebuilt.
+4. Open `dist/index.html` in a web browser, refresh the page with ctrl+shift+r whenever the project is rebuilt.
 
 
 ## Contributing
