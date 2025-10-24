@@ -3,6 +3,7 @@ import interact from 'interactjs';
 import Util from '../util';
 import Vector from '../Vector';
 import DomainController from './domain_controller';
+import dat, { GUI } from 'dat.gui';
 
 interface Draggable {
     getCentre: (() => Vector);
@@ -25,7 +26,7 @@ export default class DragController {
     private disabled: boolean = false;
     private domainController = DomainController.getInstance();
 
-    constructor(private gui: dat.GUI) {
+    constructor(private gui: GUI) {
         interact(`#${Util.CANVAS_ID}`).draggable({
             onstart: this.dragStart.bind(this),
             onmove: this.dragMove.bind(this),

@@ -1,5 +1,7 @@
 import * as log from 'loglevel';
-import * as dat from 'dat.gui';
+import dat, { GUI } from 'dat.gui';
+
+
 import TensorFieldGUI from './ts/ui/tensor_field_gui';
 import {NoiseParams} from './ts/impl/tensor_field';
 import MainGUI from './ts/ui/main_gui';
@@ -19,12 +21,12 @@ class Main {
     private readonly STARTING_WIDTH = 1440;  // Initially zooms in if width > STARTING_WIDTH
 
     // UI
-    private gui: dat.GUI = new dat.GUI({width: 720});
-    private tensorFolder: dat.GUI;
-    private roadsFolder: dat.GUI;
-    private styleFolder: dat.GUI;
-    private optionsFolder: dat.GUI;
-    private downloadsFolder: dat.GUI;
+    private gui: GUI = new dat.GUI({width: 720});
+    private tensorFolder: GUI;
+    private roadsFolder: GUI;
+    private styleFolder: GUI;
+    private optionsFolder: GUI;
+    private downloadsFolder: GUI;
 
     private domainController = DomainController.getInstance();
     private dragController = new DragController(this.gui);

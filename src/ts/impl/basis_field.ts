@@ -1,5 +1,6 @@
 import Tensor from './tensor';
 import Vector from '../vector';
+import dat, { GUI } from 'dat.gui';
 
 export const enum FIELD_TYPE {
     Radial,
@@ -13,8 +14,8 @@ export abstract class BasisField {
     abstract readonly FOLDER_NAME: string;
     abstract readonly FIELD_TYPE: number;
     protected static folderNameIndex: number = 0;
-    protected parentFolder: dat.GUI;
-    protected folder: dat.GUI;
+    protected parentFolder: GUI;
+    protected folder: GUI;
     protected _centre: Vector;
 
     constructor(centre: Vector, protected _size: number, protected _decay: number) {
@@ -53,24 +54,25 @@ export abstract class BasisField {
     }
 
     setFolder(): void {
-        if (this.parentFolder.__folders) {
-            for (const folderName in this.parentFolder.__folders) {
-                this.parentFolder.__folders[folderName].close();
+        if ((this.parentFolder as any).__folders) {
+            for (const folderName in (this.parentFolder as any).__folders) {
+                (this.parentFolder as any).__folders[folderName].close();
             }
-            this.folder.open();
+            (this.folder as any).open();
         }
     }
 
     removeFolderFromParent(): void {
-        if (this.parentFolder.__folders && Object.values(this.parentFolder.__folders).indexOf(this.folder) >= 0) {
-            this.parentFolder.removeFolder(this.folder);
+        const folders = (this.parentFolder as any).__folders;
+        if (folders && Object.values(folders).indexOf(this.folder) >= 0) {
+            (this.parentFolder as any).removeFolder(this.folder);
         }
     }
 
     /**
      * Creates a folder and adds it to the GUI to control params
      */
-    setGui(parent: dat.GUI, folder: dat.GUI): void {
+    setGui(parent: GUI, folder: GUI): void {
         this.parentFolder = parent;
         this.folder = folder;
         folder.add(this._centre, 'x');
@@ -107,11 +109,11 @@ export class Grid extends BasisField {
         this._theta = theta;
     }
 
-    setGui(parent: dat.GUI, folder: dat.GUI): void {
+    setGui(parent: GUI, folder: GUI): void {
         super.setGui(parent, folder);
 
-        // GUI in degrees, convert to rads
-        const thetaProp = {theta: this._theta * 180 / Math.PI};
+        // GUI in degrees, convert to radians
+        const thetaProp = { theta: this._theta * 180 / Math.PI };
         const thetaController = folder.add(thetaProp, 'theta', -90, 90);
         thetaController.onChange(theta => this._theta = theta * (Math.PI / 180));
     }
@@ -133,7 +135,7 @@ export class Radial extends BasisField {
 
     getTensor(point: Vector): Tensor {
         const t = point.clone().sub(this._centre);
-        const t1 = t.y**2 - t.x**2;
+        const t1 = t.y ** 2 - t.x ** 2;
         const t2 = -2 * t.x * t.y;
         return new Tensor(1, [t1, t2]);
     }

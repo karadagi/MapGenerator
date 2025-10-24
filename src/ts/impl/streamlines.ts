@@ -1,5 +1,6 @@
 import * as log from 'loglevel';
-import * as simplify from 'simplify-js';
+import simplify from 'simplify-js';
+
 import Vector from '../vector';
 import GridStorage from './grid_storage';
 import FieldIntegrator from './integrator';
@@ -171,7 +172,7 @@ export default class StreamlineGenerator {
                     // Backwards
                     continue;
                 }
-                
+
                 // Acute angle between vectors (agnostic of CW, ACW)
                 const distanceToSample = point.distanceToSquared(sample);
                 if (distanceToSample < 2 * this.paramsSq.dstep) {
@@ -284,7 +285,7 @@ export default class StreamlineGenerator {
 
     protected validStreamline(s: Vector[]): boolean {
         return s.length > 5;
-    } 
+    }
 
     protected setParamsSq(): void {
         this.paramsSq = Object.assign({}, this.params);
@@ -302,7 +303,7 @@ export default class StreamlineGenerator {
             Math.random() * this.worldDimensions.y)
             .add(this.origin);
     }
- 
+
     /**
      * Tries this.candidateSeeds first, then samples using this.samplePoint
      */

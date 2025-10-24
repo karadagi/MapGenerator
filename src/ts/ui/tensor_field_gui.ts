@@ -1,10 +1,11 @@
+import { GUI } from 'dat.gui';
 import * as log from 'loglevel';
-import {DefaultCanvasWrapper} from './canvas_wrapper';
+import { DefaultCanvasWrapper } from './canvas_wrapper';
 import DomainController from './domain_controller';
 import DragController from './drag_controller';
 import TensorField from '../impl/tensor_field';
-import {NoiseParams} from '../impl/tensor_field';
-import {BasisField, FIELD_TYPE} from '../impl/basis_field';
+import { NoiseParams } from '../impl/tensor_field';
+import { BasisField, FIELD_TYPE } from '../impl/basis_field';
 import Util from '../util';
 import Vector from '../vector';
 
@@ -16,8 +17,12 @@ export default class TensorFieldGUI extends TensorField {
     private TENSOR_SPAWN_SCALE = 0.7;  // How much to shrink worldDimensions to find spawn point
     private domainController = DomainController.getInstance();
 
-    constructor(private guiFolder: dat.GUI, private dragController: DragController,
-        public drawCentre: boolean, noiseParams: NoiseParams) {
+    constructor(
+        private guiFolder: GUI,
+        private dragController: DragController,
+        public drawCentre: boolean,
+        noiseParams: NoiseParams
+    ) {
         super(noiseParams);
         // For custom naming of gui buttons
         const tensorFieldGuiObj = {
@@ -67,9 +72,11 @@ export default class TensorFieldGUI extends TensorField {
 
     addRadialRandom(): void {
         const width = this.domainController.worldDimensions.x;
-        this.addRadial(this.randomLocation(),
+        this.addRadial(
+            this.randomLocation(),
             Util.randomRange(width / 6, width / 4),  // Size
-            Util.randomRange(30));  // Decay
+            Util.randomRange(30)                      // Decay
+        );
     }
 
     addGridRandom(): void {
@@ -78,18 +85,24 @@ export default class TensorFieldGUI extends TensorField {
 
     private addGridAtLocation(location: Vector): void {
         const width = this.domainController.worldDimensions.x;
-        this.addGrid(location,
+        this.addGrid(
+            location,
             Util.randomRange(width / 4, width / 2),  // Size
-            Util.randomRange(50),  // Decay
-            Util.randomRange(Math.PI / 2));
+            Util.randomRange(50),                    // Decay
+            Util.randomRange(Math.PI / 2)
+        );
     }
+
     private addGridCartesian(location: Vector): void {
         const width = this.domainController.worldDimensions.x;
-        this.addGrid(location,
+        this.addGrid(
+            location,
             Util.randomRange(width / 4, width),  // Size
-            Util.randomRange(50),  // Decay
-            Util.randomRange(Math.PI / 2));
+            Util.randomRange(50),                // Decay
+            Util.randomRange(Math.PI / 2)
+        );
     }
+
     /**
      * World-space random location for tensor field spawn
      * Sampled from middle of screen (shrunk rectangle)
@@ -110,7 +123,7 @@ export default class TensorFieldGUI extends TensorField {
         const originX = diameter * Math.floor(this.domainController.origin.x / diameter);
         const originY = diameter * Math.floor(this.domainController.origin.y / diameter);
 
-        const out = [];
+        const out: Vector[] = [];
         for (let x = 0; x <= nHor; x++) {
             for (let y = 0; y <= nVer; y++) {
                 out.push(new Vector(originX + (x * diameter), originY + (y * diameter)));
@@ -122,7 +135,6 @@ export default class TensorFieldGUI extends TensorField {
 
     private getTensorLine(point: Vector, tensorV: Vector): Vector[] {
         const transformedPoint = this.domainController.worldToScreen(point.clone());
-
         const diff = tensorV.multiplyScalar(this.TENSOR_LINE_DIAMETER / 2);  // Assumes normalised
         const start = transformedPoint.clone().sub(diff);
         const end = transformedPoint.clone().add(diff);
@@ -147,9 +159,10 @@ export default class TensorFieldGUI extends TensorField {
         if (this.drawCentre) {
             canvas.setFillStyle('red');
             this.getBasisFields().forEach(field =>
-                field.FIELD_TYPE === FIELD_TYPE.Grid ?
-                canvas.drawSquare(this.domainController.worldToScreen(field.centre), 10) :
-                canvas.drawCircle(this.domainController.worldToScreen(field.centre), 10))
+                field.FIELD_TYPE === FIELD_TYPE.Grid
+                    ? canvas.drawSquare(this.domainController.worldToScreen(field.centre), 10)
+                    : canvas.drawCircle(this.domainController.worldToScreen(field.centre), 10)
+            );
         }
     }
 
@@ -163,14 +176,14 @@ export default class TensorFieldGUI extends TensorField {
             field.dragMoveListener.bind(field),
             field.dragStartListener.bind(field)
         );
-        const removeFieldObj = {remove: () => this.removeFieldGUI(field, deregisterDrag)};
+        const removeFieldObj = { remove: () => this.removeFieldGUI(field, deregisterDrag) };
 
         // Give dat gui removeField button
         folder.add(removeFieldObj, 'remove');
         field.setGui(this.guiFolder, folder);
     }
 
-    private removeFieldGUI(field: BasisField, deregisterDrag: (() => void)): void {
+    private removeFieldGUI(field: BasisField, deregisterDrag: () => void): void {
         super.removeField(field);
         field.removeFolderFromParent();
         // Deregister from drag controller
@@ -178,13 +191,16 @@ export default class TensorFieldGUI extends TensorField {
     }
 
     reset(): void {
-        // TODO kind of hacky - calling remove callbacks from gui object, should store callbacks
-        // in addfield and call them (requires making sure they're idempotent)
-        for (const fieldFolderName in this.guiFolder.__folders) {
-            const fieldFolder = this.guiFolder.__folders[fieldFolderName];
-            (fieldFolder.__controllers[0] as any).initialValue();
+        const g = this.guiFolder as any;
+        if (g.__folders) {
+            for (const fieldFolderName in g.__folders) {
+                const fieldFolder = g.__folders[fieldFolderName];
+                const controllers = (fieldFolder as any).__controllers;
+                if (controllers && controllers[0] && controllers[0].initialValue) {
+                    controllers[0].initialValue();
+                }
+            }
         }
-
         super.reset();
     }
 }

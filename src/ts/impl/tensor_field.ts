@@ -1,6 +1,7 @@
 import * as log from 'loglevel';
 // import * as noise from 'noisejs';
-import * as SimplexNoise from 'simplex-noise';
+import SimplexNoise from 'simplex-noise';
+
 import Tensor from './tensor';
 import Vector from '../vector';
 import {Grid, Radial, BasisField} from './basis_field';
@@ -48,7 +49,7 @@ export default class TensorField {
 
     addGrid(centre: Vector, size: number, decay: number, theta: number): void {
         const grid = new Grid(centre, size, decay, theta);
-        this.addField(grid);        
+        this.addField(grid);
     }
 
     addRadial(centre: Vector, size: number, decay: number): void {

@@ -1,16 +1,17 @@
+import { GUI } from 'dat.gui';
 import * as log from 'loglevel';
 import CanvasWrapper from './canvas_wrapper';
 import DomainController from './domain_controller';
 import Util from '../util';
 import FieldIntegrator from '../impl/integrator';
-import {StreamlineParams} from '../impl/streamlines';
-import {WaterParams} from '../impl/water_generator';
+import { StreamlineParams } from '../impl/streamlines';
+import { WaterParams } from '../impl/water_generator';
 import WaterGenerator from '../impl/water_generator';
 import Vector from '../vector';
 import PolygonFinder from '../impl/polygon_finder';
 import PolygonUtil from '../impl/polygon_util';
 import RoadGUI from './road_gui';
-import {NoiseParams} from '../impl/tensor_field';
+import { NoiseParams } from '../impl/tensor_field';
 import TensorField from '../impl/tensor_field';
 
 /**
@@ -19,28 +20,34 @@ import TensorField from '../impl/tensor_field';
 export default class WaterGUI extends RoadGUI {
     protected streamlines: WaterGenerator;
 
-    constructor(private tensorField: TensorField,
-                protected params: WaterParams,
-                integrator: FieldIntegrator,
-                guiFolder: dat.GUI,
-                closeTensorFolder: () => void,
-                folderName: string,
-                redraw: () => void) {
+    constructor(
+        private tensorField: TensorField,
+        protected params: WaterParams,
+        integrator: FieldIntegrator,
+        guiFolder: GUI,
+        closeTensorFolder: () => void,
+        folderName: string,
+        redraw: () => void
+    ) {
         super(params, integrator, guiFolder, closeTensorFolder, folderName, redraw);
         this.streamlines = new WaterGenerator(
-            this.integrator, this.domainController.origin,
+            this.integrator,
+            this.domainController.origin,
             this.domainController.worldDimensions,
-            Object.assign({},this.params), this.tensorField);
+            { ...this.params },
+            this.tensorField
+        );
     }
 
     initFolder(): WaterGUI {
         const folder = this.guiFolder.addFolder(this.folderName);
-        folder.add({Generate: () => this.generateRoads()}, 'Generate');
+        folder.add({ Generate: () => this.generateRoads() }, 'Generate');
 
         const coastParamsFolder = folder.addFolder('CoastParams');
         coastParamsFolder.add(this.params.coastNoise, 'noiseEnabled');
         coastParamsFolder.add(this.params.coastNoise, 'noiseSize');
         coastParamsFolder.add(this.params.coastNoise, 'noiseAngle');
+
         const riverParamsFolder = folder.addFolder('RiverParams');
         riverParamsFolder.add(this.params.riverNoise, 'noiseEnabled');
         riverParamsFolder.add(this.params.riverNoise, 'noiseSize');
@@ -49,18 +56,22 @@ export default class WaterGUI extends RoadGUI {
         folder.add(this.params, 'simplifyTolerance');
         const devParamsFolder = folder.addFolder('Dev');
         this.addDevParamsToFolder(this.params, devParamsFolder);
+
         return this;
     }
 
     generateRoads(): Promise<void> {
         this.preGenerateCallback();
 
-        this.domainController.ZOOM = this.domainController.ZOOM / Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM /= Util.DRAW_INFLATE_AMOUNT;
         this.streamlines = new WaterGenerator(
-            this.integrator, this.domainController.origin,
+            this.integrator,
+            this.domainController.origin,
             this.domainController.worldDimensions,
-            Object.assign({},this.params), this.tensorField);
-        this.domainController.ZOOM = this.domainController.ZOOM * Util.DRAW_INFLATE_AMOUNT;
+            { ...this.params },
+            this.tensorField
+        );
+        this.domainController.ZOOM *= Util.DRAW_INFLATE_AMOUNT;
 
         this.streamlines.createCoast();
         this.streamlines.createRiver();
@@ -68,7 +79,8 @@ export default class WaterGUI extends RoadGUI {
         this.closeTensorFolder();
         this.redraw();
         this.postGenerateCallback();
-        return new Promise<void>(resolve => resolve());
+
+        return Promise.resolve();
     }
 
     /**
@@ -89,8 +101,7 @@ export default class WaterGUI extends RoadGUI {
     }
 
     get coastline(): Vector[] {
-        // Use unsimplified noisy streamline as coastline
-        // Visual only, no road logic performed using this
+        // Use unsimplified noisy streamline as coastline (visual only)
         return this.streamlines.coastline.map(v => this.domainController.worldToScreen(v.clone()));
     }
 
@@ -98,7 +109,7 @@ export default class WaterGUI extends RoadGUI {
         return this.streamlines.seaPolygon.map(v => this.domainController.worldToScreen(v.clone()));
     }
 
-    protected addDevParamsToFolder(params: StreamlineParams, folder: dat.GUI): void {
+    protected addDevParamsToFolder(params: StreamlineParams, folder: GUI): void {
         folder.add(params, 'dsep');
         folder.add(params, 'dtest');
         folder.add(params, 'pathIterations');
@@ -108,5 +119,4 @@ export default class WaterGUI extends RoadGUI {
         folder.add(params, 'dcirclejoin');
         folder.add(params, 'joinangle');
     }
-
 }

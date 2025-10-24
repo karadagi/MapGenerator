@@ -1,3 +1,6 @@
+import { GUI } from 'dat.gui';
+
+
 export interface RandomRange {
     min?: number;
     max: number;
@@ -13,21 +16,23 @@ export default class Util {
     static readonly DRAW_INFLATE_AMOUNT = 1.2;
 
     // Refresh dat.GUI values
-    static updateGui(gui: dat.GUI): void {
-        if (gui.__controllers) {
-            gui.__controllers.forEach(c => c.updateDisplay());
+    static updateGui(gui: GUI): void {
+        const g = gui as any; // allow access to private internals
+        if (g.__controllers) {
+            g.__controllers.forEach((c: any) => c.updateDisplay());
         }
-        if (gui.__folders) {
-            for (const folderName in gui.__folders) {
-                this.updateGui(gui.__folders[folderName]);
+        if (g.__folders) {
+            for (const folderName in g.__folders) {
+                this.updateGui(g.__folders[folderName]);
             }
         }
     }
 
-    static removeAllFolders(gui: dat.GUI): void {
-        if (gui.__folders) {
-            for (const folderName in gui.__folders) {
-                gui.removeFolder(gui.__folders[folderName]);
+    static removeAllFolders(gui: GUI): void {
+        const g = gui as any;
+        if (g.__folders) {
+            for (const folderName in g.__folders) {
+                g.removeFolder(g.__folders[folderName]);
             }
         }
     }

@@ -6,6 +6,7 @@ import Vector from '../vector';
 import PolygonFinder from '../impl/polygon_finder';
 import {PolygonParams} from '../impl/polygon_finder';
 import PolygonUtil from '../impl/polygon_util';
+import dat, { GUI } from 'dat.gui';
 
 export interface BuildingModel {
     height: number;
@@ -101,7 +102,7 @@ export default class Buildings {
     };
 
     constructor(private tensorField: TensorField,
-                folder: dat.GUI,
+                folder: GUI,
                 private redraw: () => void,
                 private dstep: number,
                 private _animate: boolean) {

@@ -1,13 +1,21 @@
 {
-    "compilerOptions": {
-        "noImplicitAny": true,
-        "target": "es5",
-        "skipLibCheck": true,
-        "lib": ["es6", "DOM", "ScriptHost"],
-        "downlevelIteration": true,
-        "resolveJsonModule": true
-    },
-    "include": [
-        "src/**/*.ts"
-    ]
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+
+    "strict": false,
+    "noImplicitAny": false,
+    "noImplicitThis": false,
+
+    "noEmitOnError": false,
+    "skipLibCheck": true,
+    "downlevelIteration": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "typeRoots": ["./src/types", "./node_modules/@types"]
+
+  },
+  "include": ["src/**/*.ts", "src/**/*.json", "src/types/**/*.d.ts"]
 }

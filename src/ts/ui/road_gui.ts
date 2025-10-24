@@ -1,9 +1,10 @@
+import { GUI } from 'dat.gui';
 import * as log from 'loglevel';
 import CanvasWrapper from './canvas_wrapper';
 import DomainController from './domain_controller';
 import Util from '../util';
 import FieldIntegrator from '../impl/integrator';
-import {StreamlineParams} from '../impl/streamlines';
+import { StreamlineParams } from '../impl/streamlines';
 import StreamlineGenerator from '../impl/streamlines';
 import Vector from '../vector';
 
@@ -16,19 +17,23 @@ export default class RoadGUI {
     protected domainController = DomainController.getInstance();
     protected preGenerateCallback: () => any = () => {};
     protected postGenerateCallback: () => any = () => {};
+    private streamlinesInProgress = false;
 
-    private streamlinesInProgress: boolean = false;
-
-    constructor(protected params: StreamlineParams,
-                protected integrator: FieldIntegrator,
-                protected guiFolder: dat.GUI,
-                protected closeTensorFolder: () => void,
-                protected folderName: string,
-                protected redraw: () => void,
-                protected _animate=false) {
+    constructor(
+        protected params: StreamlineParams,
+        protected integrator: FieldIntegrator,
+        protected guiFolder: GUI,
+        protected closeTensorFolder: () => void,
+        protected folderName: string,
+        protected redraw: () => void,
+        protected _animate = false
+    ) {
         this.streamlines = new StreamlineGenerator(
-            this.integrator, this.domainController.origin,
-            this.domainController.worldDimensions, this.params);
+            this.integrator,
+            this.domainController.origin,
+            this.domainController.worldDimensions,
+            this.params
+        );
 
         // Update path iterations based on window size
         this.setPathIterations();
@@ -54,6 +59,7 @@ export default class RoadGUI {
 
         const devParamsFolder = paramsFolder.addFolder('Dev');
         this.addDevParamsToFolder(this.params, devParamsFolder);
+
         return this;
     }
 
@@ -66,7 +72,6 @@ export default class RoadGUI {
     }
 
     get roads(): Vector[][] {
-        // For drawing not generation, probably fine to leave map
         return this.streamlines.allStreamlinesSimple.map(s =>
             s.map(v => this.domainController.worldToScreen(v.clone()))
         );
@@ -80,11 +85,11 @@ export default class RoadGUI {
         this.existingStreamlines = existingStreamlines;
     }
 
-    setPreGenerateCallback(callback: () => any) {
+    setPreGenerateCallback(callback: () => any): void {
         this.preGenerateCallback = callback;
     }
 
-    setPostGenerateCallback(callback: () => any) {
+    setPostGenerateCallback(callback: () => any): void {
         this.postGenerateCallback = callback;
     }
 
@@ -92,17 +97,20 @@ export default class RoadGUI {
         this.streamlines.clearStreamlines();
     }
 
-    async generateRoads(animate=false): Promise<unknown> {
+    async generateRoads(animate = false): Promise<unknown> {
         this.preGenerateCallback();
 
-        this.domainController.ZOOM = this.domainController.ZOOM / Util.DRAW_INFLATE_AMOUNT;
+        this.domainController.ZOOM /= Util.DRAW_INFLATE_AMOUNT;
         this.streamlines = new StreamlineGenerator(
-            this.integrator, this.domainController.origin,
-            this.domainController.worldDimensions, Object.assign({},this.params));
-        this.domainController.ZOOM = this.domainController.ZOOM * Util.DRAW_INFLATE_AMOUNT;
+            this.integrator,
+            this.domainController.origin,
+            this.domainController.worldDimensions,
+            { ...this.params }
+        );
+        this.domainController.ZOOM *= Util.DRAW_INFLATE_AMOUNT;
 
         for (const s of this.existingStreamlines) {
-            this.streamlines.addExistingStreamlines(s.streamlines)
+            this.streamlines.addExistingStreamlines(s.streamlines);
         }
 
         this.closeTensorFolder();
@@ -112,13 +120,13 @@ export default class RoadGUI {
     }
 
     /**
-     * Returns true if streamlines changes
+     * Returns true if streamlines change
      */
     update(): boolean {
         return this.streamlines.update();
     }
 
-    protected addDevParamsToFolder(params: StreamlineParams, folder: dat.GUI): void {
+    protected addDevParamsToFolder(params: StreamlineParams, folder: GUI): void {
         folder.add(params, 'pathIterations');
         folder.add(params, 'seedTries');
         folder.add(params, 'dstep');
@@ -134,7 +142,7 @@ export default class RoadGUI {
      */
     private setPathIterations(): void {
         const max = 1.5 * Math.max(window.innerWidth, window.innerHeight);
-        this.params.pathIterations = max/this.params.dstep;
-        Util.updateGui(this.guiFolder);
+        this.params.pathIterations = max / this.params.dstep;
+        Util.updateGui(this.guiFolder as any);
     }
 }
