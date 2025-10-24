@@ -6,14 +6,9 @@
   <p align="center">
     Create procedural cities
     <br />
-    <a href="[https://karadagi.github.io/MapGenerator/]"><strong>Open Generator »</strong></a>
+    <a href="https://karadagi.github.io/MapGenerator/"><strong>Open Generator »</strong></a>
     <br />
     <br />
-    <a href="https://maps.probabletrain.com" target="_blank">Read the Docs</a>
-    ·
-    <a href="https://github.com/probabletrain/mapgenerator/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/probabletrain/mapgenerator/issues">Request Feature</a>
   </p>
 </p>
 
